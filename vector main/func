@@ -1,0 +1,256 @@
+#include<stdio.h>
+#include<stdlib.h>
+
+typedef struct {
+    int *data;
+    size_t size;
+    size_t capacity;
+} Vector;
+
+void vector_init(Vector *vec) {
+    vec->capacity = 0;
+    vec->size = 0;
+    vec->data = NULL;
+}
+
+void vector_init_size(Vector *vec, size_t n) {
+    vec->capacity = n;
+    vec->size = 0; 
+    vec->data = (int*)malloc(sizeof(int) * vec->capacity);
+}
+
+void vector_init_fill(Vector *vec, size_t n, int value) {
+    vec->capacity = n;
+    vec->size = n;
+    vec->data = (int*)malloc(sizeof(int) * n);
+    for (int i = 0; i < n; i++) {
+        vec->data[i] = value;
+    }
+}
+
+void vector_copy(Vector *vec, const Vector *vec1) {
+    vec->capacity = vec1->capacity;
+    vec->size = vec1->size;
+    vec->data = (int*)malloc(sizeof(int) * vec1->capacity);
+    for (int i = 0; i < vec1->size; i++) {
+        vec->data[i] = vec1->data[i];
+    }
+}
+
+void vector_destroy(Vector *vec) {
+    vec->capacity = 0;
+    vec->size = 0;
+    free(vec->data);
+    vec->data = NULL;
+}
+
+Vector *vector_assign(const Vector *dest, Vector *src) {
+    src->capacity = dest->capacity;
+    src->size = dest->size;
+    src->data = (int*)malloc(sizeof(int) * dest->capacity);
+    for (int i = 0; i < dest->size; i++) {
+        src->data[i] = dest->data[i];
+    }
+    return src;
+}
+
+int* vector_at(Vector *vec, size_t index) {
+    if (index < vec->size) {
+        return &vec->data[index];
+    }
+    return NULL;
+}
+
+int* vector_front(Vector *v) {
+    if (v->size == 0) {
+        return NULL;
+    }
+    return &v->data[0];
+}
+
+int* vector_back(Vector *v) {
+    if (v->size == 0) {
+        return NULL;
+    }
+    return &v->data[v->size - 1];
+}
+
+int vector_empty(const Vector *v) {
+    return v->size == 0;
+}
+
+size_t vector_size(const Vector *v) {
+    return v->size;
+}
+
+size_t vector_capacity(const Vector *v) {
+    return v->capacity;
+}
+
+void vector_reserve(Vector *v, size_t new_cap) {
+    if (new_cap > v->capacity) {
+        int *ptr = (int*)malloc(sizeof(int) * new_cap);
+        for (int i = 0; i < v->size; i++) {
+            ptr[i] = v->data[i];
+        }
+        free(v->data);
+        v->data = ptr;
+        v->capacity = new_cap;
+    }
+}
+
+void vector_clear(Vector *v) {
+    v->size = 0;
+}
+
+void vector_push_back(Vector *v, int value) {
+    if (v->capacity == 0) {
+        v->capacity = 1;
+        v->data = (int*)malloc(sizeof(int) * v->capacity);
+    }
+    if (v->size >= v->capacity) {
+        v->capacity *= 2;
+        int *ptr = (int*)malloc(sizeof(int) * v->capacity);
+        for (int i = 0; i < v->size; i++) {
+            ptr[i] = v->data[i];
+        }
+        free(v->data);
+        v->data = ptr;
+    }
+    v->data[v->size] = value;
+    v->size++;
+}
+
+void vector_pop_back(Vector *v) {
+    if (v->size > 0) {
+        v->size--;
+    }
+}
+
+void vector_insert(Vector *v, size_t pos, int value) {
+    if (pos > v->size) return;
+    
+    if (v->size >= v->capacity) {
+        v->capacity = (v->capacity == 0) ? 1 : v->capacity * 2;
+        int *ptr = (int*)malloc(sizeof(int) * v->capacity);
+        for (int i = 0; i < v->size; i++) {
+            ptr[i] = v->data[i];
+        }
+        free(v->data);
+        v->data = ptr;
+    }
+
+    for (int i = v->size; i > pos; i--) {
+        v->data[i] = v->data[i - 1];
+    }
+    v->data[pos] = value;
+    v->size++;
+}
+
+void vector_erase(Vector *v, size_t pos) {
+    if (pos >= v->size) { 
+    return;
+    }
+
+    for (int i = pos; i < v->size - 1; i++) {
+        v->data[i] = v->data[i + 1];
+    }
+    v->size--;
+}
+
+void vector_resize(Vector *v, size_t count) {
+    if (count > v->capacity) {
+        vector_reserve(v, count);
+    }
+    for (int i = v->size; i < count; i++) {
+        v->data[i] = 0; // Filling with default value
+    }
+    v->size = count;
+}
+
+void vector_swap(Vector *v1, Vector *v2) {
+    Vector temp = *v1;
+    *v1 = *v2;
+    *v2 = temp;
+}
+
+int main() {
+    // 1. Initialize an empty vector
+    Vector vec;
+    vector_init(&vec);
+    printf("Vector initialized. Size: %zu, Capacity: %zu\n", vector_size(&vec), vector_capacity(&vec));
+
+    // 2. Push elements into the vector
+    for (int i = 0; i < 5; ++i) {
+        vector_push_back(&vec, i * 10);
+        printf("Added %d to vector. Size: %zu, Capacity: %zu\n", i * 10, vector_size(&vec), vector_capacity(&vec));
+    }
+
+    // 3. Access elements at specific positions
+    printf("Element at index 2: %d\n", *vector_at(&vec, 2));
+    printf("First element: %d\n", *vector_front(&vec));
+    printf("Last element: %d\n", *vector_back(&vec));
+
+    // 4. Insert element at a specific position
+    vector_insert(&vec, 2, 99);
+    printf("Inserted 99 at index 2. Vector contents: ");
+    for (int i = 0; i < vector_size(&vec); ++i) {
+        printf("%d ", vec.data[i]);
+    }
+    printf("\n");
+
+    // 5. Remove element from a specific position
+    vector_erase(&vec, 3);
+    printf("Erased element at index 3. Vector contents: ");
+    for (int i = 0; i < vector_size(&vec); ++i) {
+        printf("%d ", vec.data[i]);
+    }
+    printf("\n");
+
+    // 6. Resize the vector to hold 8 elements
+    vector_resize(&vec, 8);
+    printf("Resized vector to hold 8 elements. Size: %zu, Capacity: %zu\n", vector_size(&vec), vector_capacity(&vec));
+
+    // 7. Clear the vector
+    vector_clear(&vec);
+    printf("Cleared vector. Size: %zu, Capacity: %zu\n", vector_size(&vec), vector_capacity(&vec));
+
+    // 8. Initialize a new vector with specific size and fill
+    Vector vec2;
+    vector_init_fill(&vec2, 5, 42);
+    printf("Initialized vec2 with 5 elements filled with 42. Contents: ");
+    for (int i = 0; i < vector_size(&vec2); ++i) {
+        printf("%d ", vec2.data[i]);
+    }
+    printf("\n");
+
+    // 9. Copy vec2 into a new vector
+    Vector vec3;
+    vector_copy(&vec3, &vec2);
+    printf("Copied vec2 to vec3. vec3 contents: ");
+    for (int i = 0; i < vector_size(&vec3); ++i) {
+        printf("%d ", vec3.data[i]);
+    }
+    printf("\n");
+
+    // 10. Swap vec and vec3
+    vector_swap(&vec, &vec3);
+    printf("Swapped vec and vec3. vec contents: ");
+    for (int i = 0; i < vector_size(&vec); ++i) {
+        printf("%d ", vec.data[i]);
+    }
+    printf("\n");
+    printf("vec3 contents after swap: ");
+    for (int i = 0; i < vector_size(&vec3); ++i) {
+        printf("%d ", vec3.data[i]);
+    }
+    printf("\n");
+
+    // 11. Cleanup and destroy vectors
+    vector_destroy(&vec);
+    vector_destroy(&vec2);
+    vector_destroy(&vec3);
+    printf("All vectors destroyed.\n");
+
+    return 0;
+}
